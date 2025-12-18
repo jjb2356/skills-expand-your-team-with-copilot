@@ -501,6 +501,71 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Function to generate share URL and text
+  function generateShareData(activityName, details) {
+    const formattedSchedule = formatSchedule(details);
+    const shareUrl = window.location.origin + window.location.pathname;
+    const shareText = `Check out ${activityName} at Mergington High School! ${details.description} Schedule: ${formattedSchedule}`;
+    
+    return {
+      url: shareUrl,
+      text: shareText,
+      title: activityName
+    };
+  }
+
+  // Function to handle social sharing
+  function handleShare(platform, activityName, details, buttonElement) {
+    const shareData = generateShareData(activityName, details);
+    const encodedUrl = encodeURIComponent(shareData.url);
+    const encodedText = encodeURIComponent(shareData.text);
+    const encodedTitle = encodeURIComponent(shareData.title);
+    
+    let shareUrl;
+    
+    switch(platform) {
+      case 'twitter':
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+        window.open(shareUrl, '_blank', 'width=550,height=420');
+        break;
+      case 'facebook':
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+        window.open(shareUrl, '_blank', 'width=550,height=420');
+        break;
+      case 'linkedin':
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        window.open(shareUrl, '_blank', 'width=550,height=420');
+        break;
+      case 'email':
+        shareUrl = `mailto:?subject=${encodedTitle}&body=${encodedText}%0D%0A%0D%0A${encodedUrl}`;
+        window.location.href = shareUrl;
+        break;
+      case 'copy':
+        // Copy to clipboard (requires HTTPS or localhost)
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(shareData.url).then(() => {
+            showMessage('Link copied to clipboard!', 'success');
+            // Add visual feedback to the copy button
+            if (buttonElement) {
+              buttonElement.classList.add('copied');
+              buttonElement.textContent = '✓';
+              setTimeout(() => {
+                buttonElement.classList.remove('copied');
+                buttonElement.textContent = '🔗';
+              }, 2000);
+            }
+          }).catch(err => {
+            console.error('Failed to copy:', err);
+            showMessage('Failed to copy link', 'error');
+          });
+        } else {
+          // Fallback for non-secure contexts
+          showMessage('Copy to clipboard requires HTTPS', 'error');
+        }
+        break;
+    }
+  }
+
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
@@ -548,6 +613,30 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+    // Create social sharing buttons
+    const shareButtons = `
+      <div class="share-container">
+        <div class="share-label">Share this activity:</div>
+        <div class="share-buttons">
+          <button class="share-button twitter" data-platform="twitter" title="Share on Twitter">
+            X
+          </button>
+          <button class="share-button facebook" data-platform="facebook" title="Share on Facebook">
+            ƒ
+          </button>
+          <button class="share-button linkedin" data-platform="linkedin" title="Share on LinkedIn">
+            in
+          </button>
+          <button class="share-button email" data-platform="email" title="Share via Email">
+            ✉
+          </button>
+          <button class="share-button copy" data-platform="copy" title="Copy link">
+            🔗
+          </button>
+        </div>
+      </div>
+    `;
+
     activityCard.innerHTML = `
       ${tagHtml}
       <h4>${name}</h4>
@@ -581,6 +670,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .join("")}
         </ul>
       </div>
+      ${shareButtons}
       <div class="activity-card-actions">
         ${
           currentUser
@@ -604,6 +694,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteButtons = activityCard.querySelectorAll(".delete-participant");
     deleteButtons.forEach((button) => {
       button.addEventListener("click", handleUnregister);
+    });
+
+    // Add click handlers for share buttons
+    const shareButtonElements = activityCard.querySelectorAll(".share-button");
+    shareButtonElements.forEach((button) => {
+      button.addEventListener("click", (event) => {
+        const platform = button.dataset.platform;
+        handleShare(platform, name, details, button);
+      });
     });
 
     // Add click handler for register button (only when authenticated)
