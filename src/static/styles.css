@@ -695,8 +695,10 @@ footer {
   border: none;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  font-weight: bold;
   padding: 0;
+  font-family: Arial, sans-serif;
 }
 
 .share-button:hover {

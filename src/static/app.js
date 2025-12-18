@@ -512,22 +512,27 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = shareUrl;
         break;
       case 'copy':
-        // Copy to clipboard
-        navigator.clipboard.writeText(shareData.url).then(() => {
-          showMessage('Link copied to clipboard!', 'success');
-          // Add visual feedback to the copy button
-          if (buttonElement) {
-            buttonElement.classList.add('copied');
-            buttonElement.textContent = '✓';
-            setTimeout(() => {
-              buttonElement.classList.remove('copied');
-              buttonElement.textContent = '🔗';
-            }, 2000);
-          }
-        }).catch(err => {
-          console.error('Failed to copy:', err);
-          showMessage('Failed to copy link', 'error');
-        });
+        // Copy to clipboard (requires HTTPS or localhost)
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(shareData.url).then(() => {
+            showMessage('Link copied to clipboard!', 'success');
+            // Add visual feedback to the copy button
+            if (buttonElement) {
+              buttonElement.classList.add('copied');
+              buttonElement.textContent = '✓';
+              setTimeout(() => {
+                buttonElement.classList.remove('copied');
+                buttonElement.textContent = '🔗';
+              }, 2000);
+            }
+          }).catch(err => {
+            console.error('Failed to copy:', err);
+            showMessage('Failed to copy link', 'error');
+          });
+        } else {
+          // Fallback for non-secure contexts
+          showMessage('Copy to clipboard requires HTTPS', 'error');
+        }
         break;
     }
   }
@@ -585,10 +590,10 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="share-label">Share this activity:</div>
         <div class="share-buttons">
           <button class="share-button twitter" data-platform="twitter" title="Share on Twitter">
-            𝕏
+            X
           </button>
           <button class="share-button facebook" data-platform="facebook" title="Share on Facebook">
-            f
+            ƒ
           </button>
           <button class="share-button linkedin" data-platform="linkedin" title="Share on LinkedIn">
             in
